@@ -276,7 +276,7 @@ describe ApplicationHelper do
         let( :options ) { { base_url: base_url } }
 
         it do
-          is_expected.to eq URI.join(base_url, source).to_s
+          is_expected.to eq URI.join( base_url, source ).to_s
         end
       end
 
@@ -289,7 +289,7 @@ describe ApplicationHelper do
       context "with neither base or site" do
         before { controller.request.host = UrlHelper.root_url }
 
-        it { is_expected.to eq URI.join(UrlHelper.root_url, source).to_s }
+        it { is_expected.to eq URI.join( UrlHelper.root_url, source ).to_s }
       end
     end
 
@@ -383,25 +383,89 @@ describe ApplicationHelper do
     before { enable_has_subscribers }
     after { disable_has_subscribers }
 
-    it "states an observation field value was added" do
-      without_delay do
-        o = Observation.make!
-        ofv = ObservationFieldValue.make!( observation: o, user: User.make! )
-        expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
-          "#{ofv.user.login} added a value for .* to an observation by #{o.user.login}"
-        )
+    describe "resource = observation field" do
+      it "states an observation field value was added" do
+        without_delay do
+          o = Observation.make!
+          ofv = ObservationFieldValue.make!( observation: o, user: User.make! )
+          expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
+            "#{ofv.user.login} added a value for .* to an observation by #{o.user.login}"
+          )
+        end
+      end
+
+      it "states an observation field value was updated" do
+        without_delay do
+          o = Observation.make!
+          ofv = ObservationFieldValue.make!( observation: o, user: o.user )
+          ofv.updater = User.make!
+          ofv.save
+          expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
+            "#{ofv.updater.login} updated a value for .* on an observation by #{o.user.login}"
+          )
+        end
       end
     end
 
-    it "states an observation field value was updated" do
-      without_delay do
-        o = Observation.make!
-        ofv = ObservationFieldValue.make!( observation: o, user: o.user )
-        ofv.updater = User.make!
-        ofv.save
-        expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
-          "#{ofv.updater.login} updated a value for .* on an observation by #{o.user.login}"
-        )
+    describe "identifier = comment" do
+      it "states a comment to a post was added" do
+        without_delay do
+          s = Site.make!
+          p = Post.make!( parent: s )
+          c = Comment.make!( user: User.make!, parent: p )
+          expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
+            "#{c.user.login} added a comment to a Journal Post .* by #{p.user.login}"
+          )
+        end
+      end
+
+      it "states a comment to an atlas was added" do
+        without_delay do
+          a = Atlas.make!
+          c = Comment.make!( user: User.make!, parent: a )
+          expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
+            "#{c.user.login} added a comment to an Atlas by #{a.user.login}"
+          )
+        end
+      end
+    end
+
+    describe "identifier = identification" do
+      it "states an identification to an observation was added" do
+        without_delay do
+          o = Observation.make!
+          i = Identification.make!( observation: o, user: User.make! )
+          expect( update_tagline_for( UpdateAction.last, skip_links: true ) ).to match(
+            "#{i.user.login} added an identification to an observation by #{o.user.login}"
+          )
+        end
+      end
+    end
+
+    describe "notification = mention" do
+      it "states a mention of a user in comment under a post as mentioning in a post" do
+        without_delay do
+          s = Site.make!
+          u = User.make!
+          p = Post.make!( parent: s )
+          c = Comment.make!( user: User.make!, parent: p, body: "Hello @#{u.login}!" )
+          # This could potentially be misleading if the commenter and the post author were the same
+          # One could think the post is mentioning you
+          expect( update_tagline_for( UpdateAction.where( notification: "mention" )[0], skip_links: true ) ).to match(
+            "#{c.user.login} mentioned you in a Journal Post .* by #{p.user.login}"
+          )
+        end
+      end
+
+      it "can state a mention of a user in a post under a site" do
+        without_delay do
+          s = Site.make!
+          u = User.make!
+          p = Post.make!( parent: s, body: "Hello @#{u.login}!" )
+          expect( update_tagline_for( UpdateAction.where( notification: "mention" )[0], skip_links: true ) ).to match(
+            "#{p.user.login} mentioned you in a Journal Post .*"
+          )
+        end
       end
     end
   end

@@ -1096,6 +1096,23 @@ module ApplicationHelper
       link_to( resource_txt, url_for_resource_with_host( resource ) )
     end
 
+    ###
+    # If `notifier.is_a?( Comment )` is true, the potential `resource`s (aka nouns) are all classes that
+    #   - have a 'has_many :comments' with a `:parent` relationship in their model file.
+    #   - 'has_subscribers' is defined
+    # As of Sept 2025, those potential `resource`s are: assessment_section, atlas, complete_set,
+    #   flag, listed_taxon, observation_field, observation, post, taxon_change, taxon_link
+    #
+    # If `notifier.is_a?( Identification )` is true, the potential `resource` is always an Observation
+    #
+    # If `update.notification == "mention"`, the potential `notifier`s are
+    # all classes that contains 'notifies_users' with `notification: "mention"`
+    # As of Sept 2025, those potential notifiers are: comment, identification,
+    #   observation, post, taxon_change
+    # The potential `resources` (aka nouns) restricted to some logic in `def notify_users` in has_subscribers
+    # For comments, it can be any of its parents.
+    # For identification, it is observation
+    # For everything else, the resource is itself (the notifier)!
     if notifier.is_a?( Comment ) || notifier.is_a?( Identification ) || update.notification == "mention"
       noun = t( :activity_snipped_resource_with_indefinite_article,
         resource: resource_link.html_safe,
@@ -1295,6 +1312,7 @@ module ApplicationHelper
         x: localized_notifier_class_name
       }
     else
+      # As of Sept 2025, there are no translations in en.yml for any keys with this as a prefix.
       key = "new_activity_on"
     end
 
@@ -1302,6 +1320,9 @@ module ApplicationHelper
       key += "_noun"
       opts[:noun] = options[:noun]
     end
+    # This if-branch logic could be made less convoluted with simply using key += "_by_owner"
+    # The translation values are the same between _by, _by_you, and _by_user
+    # for "_by_owner", owner can be calculated as "you" or the appropriate login.
     if update.resource_owner && update.resource_owner != notifier_user
       if is_admin?
         if respond_to?( :current_user ) && current_user == update.resource_owner
