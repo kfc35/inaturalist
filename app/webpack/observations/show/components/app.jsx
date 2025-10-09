@@ -20,6 +20,7 @@ import UserWithIcon from "./user_with_icon";
 import FlashMessagesContainer from "../../../shared/containers/flash_messages_container";
 import ConservationStatusBadge from "./conservation_status_badge";
 import EstablishmentMeansBadge from "./establishment_means_badge";
+import FirstOnSiteBadge from "./first_on_site_badge";
 import ActivityContainer from "../containers/activity_container";
 import AnnotationsContainer from "../containers/annotations_container";
 import AssessmentContainer from "../containers/assessment_container";
@@ -260,6 +261,7 @@ class App extends React.Component {
                   />
                   <ConservationStatusBadge observation={observation} />
                   <EstablishmentMeansBadge observation={observation} />
+                  <FirstOnSiteBadge currentUser={currentUser} observation={observation} />
                   <OverlayTrigger
                     placement="bottom"
                     trigger={["hover", "click"]}

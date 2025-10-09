@@ -2287,6 +2287,8 @@ en:
   first_confirmed_inat_observation: "First confirmed %{site_name} observation"
   first_connect_your_provider_account_to_your_site: "First, connect your %{provider} account to %{site_name}:"
   first_inat_observation: "First %{site_name} observation"
+  # Badge Label on an observation stating that it is the first observation of its taxon on the website.
+  first_on_site: "First on %{site_name_short}"
   first_observer: 1st observer
   # Verb form, as in "Flag this item"
   flag: Flag
